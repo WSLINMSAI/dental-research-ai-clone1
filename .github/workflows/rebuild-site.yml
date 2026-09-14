@@ -1,4 +1,4 @@
-name: Rebuild GitHub Pages site
+name: Build and deploy GitHub Pages site
 
 on:
   push:
@@ -8,10 +8,19 @@ on:
       - 'src/**'
       - 'downloads/**'
       - 'build.py'
+      - 'index.html'
+      - '.nojekyll'
       - '.github/workflows/rebuild-site.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -19,16 +28,31 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Rebuild index.html
+
+      - name: Build webpage
         run: python3 build.py
-      - name: Commit rebuilt site
+
+      - name: Prepare public site files
         run: |
-          if git diff --quiet -- index.html; then
-            echo "index.html is already up to date."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "Rebuild site"
-          git push
+          mkdir _site
+          cp index.html .nojekyll _site/
+          cp -R downloads _site/downloads
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
