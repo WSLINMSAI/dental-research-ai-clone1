@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 https://github.com/WSLINMSAI/dental-research-ai.git /tmp/dental-research-ai-source
-          rsync -a --delete --exclude='.git' --exclude='.github/workflows/clone-source-once.yml' --exclude='.clone-source-trigger' /tmp/dental-research-ai-source/ ./
+          rsync -a --delete --exclude='.git' --exclude='.github/workflows/clone-source-once.yml' --exclude='.github/workflows/rebuild-site.yml' --exclude='.clone-source-trigger' /tmp/dental-research-ai-source/ ./
           rm -f .clone-source-trigger
           rm -f .github/workflows/clone-source-once.yml
           git config user.name "github-actions[bot]"
